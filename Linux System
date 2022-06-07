@@ -1,0 +1,113 @@
+#Tips
+Passwd - change password
+- Take snapshots often
+
+#More resources to better use Kali:
+23 (Offensive Security, 2019), http://docs.kali.org
+24 (Offensive Security, 2019), https://forums.kali.org
+25 (Offensive Security, 2019), https://tools.kali.org
+26 (Offensive Security, 2019), https://bugs.kali.org
+27 (Offensive Security, 2019), https://kali.training
+
+#Getting into it
+• /bin - basic programs (ls, cd, cat, etc.)
+• /sbin - system programs (fdisk, mkfs, sysctl, etc)
+• /etc - configuration files
+• /tmp - temporary files (typically deleted on boot)
+• /usr/bin - applications (apt, ncat, nmap, etc.)
+• /usr/share - application support and data files
+
+Man - Manual
+man passwd - manual for the password
+man - k passwd - search for a keyword in all the man pages
+man -k '^passwd$' - match the entire line
+man 5 password - look at section 5 of the manual
+
+Man Sections:
+1- User Commands
+2- Programming interfaces for kernel system calls
+3- Programming interfaces to the C library
+4- Special files such as device nodes and drivers
+5- File formats
+6- Games and amusements such as screen-savers
+7- Miscellaneous
+8- System administration commands
+
+apropos - search man page descriptions for a possible keyword match
+- equal to man -k
+
+ls - list files
+ls /etc/apache2 - list files in a specific directory
+ls -a - list all files including hidden
+ls -1 - one listing per line (good for automation)
+
+cd - change directory
+pwd - present working directory
+mkdir - make directory
+
+mkdir module one
+ls
+module     one (created 2 dirs)
+
+rm -rf module/ one/
+(removed 2 dirs)
+
+mkdir "module one" (created 1 dir)
+
+cd module\ one/ (moved to a dir with a space in the title)
+~/notes/module one$
+
+mkdir -p test/{recon,exploit,report}
+(Created 3 directories in test/
+
+ls -1 test/ 
+exploit
+recon
+report
+
+which - searches through the directories that are defined in the $PATH environment variable for a given file name
+
+echo $PATH
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+locate - creates a database and searches from it
+sudo updatedb
+locate sbd.exe
+
+find - complex but effective
+sudo find / -name sbd*
+we can search by file age, size, owner, file type, timestamp, permissions, and more
+
+Services
+starting-
+sudo systemctl start ssh
+sudo systemctl start apache2
+
+verify-
+sudo ss -antlp | grep sshd
+sudo ss -antlp | grep apache2
+
+start on boot-
+sudo systemctl enable ssh
+sudo systemctl enable apache2
+
+show all services-
+systemctl list-unit-files
+
+Installing Tools
+
+apt update
+apt upgrade (package)
+
+apt show
+searching- searches in the description not just name 
+apt-cache search (pure-ftpd)
+
+sudo apt install - installs package and dependencies
+sudo apt remove - erases but leaves config files
+sudo apt remove --purge - erases all related to package
+
+dpkg - the default module apt uses to install packages
+- WILL NOT install dependencies automaticly
+manually install a package you have (.deb)
+sudo dpkg -i (path) 
